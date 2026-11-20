@@ -81,7 +81,6 @@ a:hover, a:focus-visible {
 .sign .coins text   { fill: #2a0a4a; font: 800 28px var(--mono); text-anchor: middle; }
 
 .sign .to   { fill: var(--yellow); font: 28px var(--script); text-anchor: middle; filter: drop-shadow(0 0 4px var(--yellow)); }
-.sign .nv   { fill: var(--yellow); font: 600 16px var(--mono); letter-spacing: 6px; text-anchor: middle; filter: drop-shadow(0 0 4px rgba(246,255,58,.8)); }
 
 .sign .name { font: 80px var(--script); text-anchor: middle; }
 .sign .halo { fill: var(--purple); opacity: .9; }
@@ -110,7 +109,7 @@ a:hover, a:focus-visible {
 }
 
 /* power off */
-.sign.off .star, .sign.off .coins circle, .sign.off .to, .sign.off .nv { fill: var(--yellow-off); filter: none; animation: none; }
+.sign.off .star, .sign.off .coins circle, .sign.off .to { fill: var(--yellow-off); filter: none; animation: none; }
 .sign.off .coins text { fill: #120c06; }
 .sign.off .halo, .sign.off .glow { opacity: 0; }
 .sign.off .core { fill: #2a2030; }
