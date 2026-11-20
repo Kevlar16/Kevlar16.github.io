@@ -106,6 +106,17 @@
 
   if (!reduce) ignite();
 
+  /* ---------- pronunciation: tap support for phones ---------- */
+
+  var say = document.querySelector(".say");
+  if (say) {
+    say.addEventListener("click", function (e) {
+      e.stopPropagation();
+      say.classList.toggle("show");
+    });
+    document.addEventListener("click", function () { say.classList.remove("show"); });
+  }
+
   /* ---------- contact, assembled here so html scrapers get nothing ---------- */
 
   var mail = document.getElementById("mail");
