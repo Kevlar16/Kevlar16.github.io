@@ -106,78 +106,105 @@
 
   if (!reduce) ignite();
 
-  /* ---------- tourists in front of the sign ---------- */
+  /* ---------- tourists in front of the sign ----------
+     they pose, shoot, take selfies and stroll on their own loops. turn the sign off
+     and they drop everything, rush the middle and unroll a protest banner. */
 
   (function () {
     var cv = document.getElementById("tourists");
     if (!cv) return;
     var ctx = cv.getContext("2d");
-    var P = 2, H = 22, W = 0;
+    var P = 2, H = 40, W = 0;
+    var FEET = H - 20;                 // y of each person's top row
 
-    // phones fire "resize" whenever the address bar slides during a scroll. resizing a
-    // canvas wipes it, so only touch it when the width really changed, and redraw at once.
+    // ---- the banner, pre-drawn once per scale ----
+    var GLYPH = {
+      W: ["X...X", "X...X", "X.X.X", "X.X.X", ".X.X."],
+      E: ["XXX", "X..", "XX.", "X..", "XXX"],
+      A: [".X.", "X.X", "XXX", "X.X", "X.X"],
+      N: ["X..X", "XX.X", "X.XX", "X..X", "X..X"],
+      T: ["XXX", ".X.", ".X.", ".X.", ".X."],
+      K: ["X..X", "X.X.", "XX..", "X.X.", "X..X"],
+      V: ["X.X", "X.X", "X.X", "X.X", ".X."],
+      L: ["X..", "X..", "X..", "X..", "XXX"],
+      B: ["XX.", "X.X", "XX.", "X.X", "XX."],
+      C: [".XX", "X..", "X..", "X..", ".XX"]
+    };
+    var TEXT = "WE WANT KEVAL BACK";
+    var banner = null, BS = 0, BW = 0, BH = 0;
+    function buildBanner(scale) {
+      var tw = 0, k;
+      for (k = 0; k < TEXT.length; k++) {
+        tw += TEXT[k] === " " ? 3 : GLYPH[TEXT[k]][0].length + (TEXT[k + 1] && TEXT[k + 1] !== " " ? 1 : 0);
+      }
+      var w = tw + 6, h = 9;
+      var b = document.createElement("canvas");
+      b.width = w * scale; b.height = h * scale;
+      var bx = b.getContext("2d");
+      function dot(x, y, c) { bx.fillStyle = c; bx.fillRect(x * scale, y * scale, scale, scale); }
+      for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) dot(x, y, (y === 0 || y === h - 1) ? "#d4141e" : "#f4efe2");
+      var cx = 3;
+      for (k = 0; k < TEXT.length; k++) {
+        var ch = TEXT[k];
+        if (ch === " ") { cx += 3; continue; }
+        var g = GLYPH[ch];
+        for (var gy = 0; gy < 5; gy++) for (var gx = 0; gx < g[gy].length; gx++) if (g[gy][gx] === "X") dot(cx + gx, 2 + gy, "#2a0a4a");
+        cx += g[0].length + 1;
+      }
+      banner = b; BS = scale; BW = w * scale; BH = h * scale;
+    }
+
     function size() {
       var w = Math.floor(cv.parentNode.clientWidth / P);
       if (w === W) return false;
       W = w;
       cv.width = W; cv.height = H;
       cv.style.height = H * P + "px";
+      buildBanner(W >= 220 ? 2 : 1);
       return true;
     }
     size();
-    window.addEventListener("resize", function () {
-      if (size()) draw(performance.now());
-    });
 
-    // one person, 10x20 art px, feet on the bottom row. flip = face left.
+    // ---- one person, 10x20 art px. flip = face left. o.hop lifts them 1px ----
     function person(x0, o, flip) {
-      var y0 = H - 20;
+      var y0 = FEET - (o.hop ? 1 : 0);
       function px(x, y, w, h, c) {
         ctx.fillStyle = c;
         ctx.fillRect(Math.round(flip ? x0 + 10 - x - w : x0 + x), y0 + y, w, h);
       }
       var S = o.skin, SH = o.shirt;
-      // legs, socks, shoes
       var lx = o.legs === "a" ? [2, 6] : o.legs === "b" ? [3, 7] : [3, 6];
       px(lx[0], 16, 1, 2, S); px(lx[1], 16, 1, 2, S);
       px(lx[0], 18, 1, 1, "#f4efe2"); px(lx[1], 18, 1, 1, "#f4efe2");
       px(lx[0] - 1, 19, 2, 1, "#2a2a2a"); px(lx[1], 19, 2, 1, "#2a2a2a");
-      // shorts
       px(2, 13, 6, 2, o.shorts); px(2, 15, 2, 1, o.shorts); px(6, 15, 2, 1, o.shorts);
-      // shirt + print
       px(2, 8, 6, 5, SH);
       if (o.print) { px(3, 9, 1, 1, o.print); px(6, 10, 1, 1, o.print); px(4, 11, 1, 1, o.print); px(5, 8, 1, 1, o.print); px(2, 12, 1, 1, o.print); }
-      // arms
-      var L = o.armL || "down", R = o.armR || "down";
       function arm(side, pose) {
         var e = side < 0 ? 1 : 8, out = side < 0 ? 0 : 9;
         if (pose === "down")  { px(e, 8, 1, 2, SH); px(e, 10, 1, 2, S); }
         if (pose === "up")    { px(e, 8, 1, 1, SH); px(out, 5, 1, 3, S); px(out, 4, 1, 1, S); }
         if (pose === "up2")   { px(e, 8, 1, 1, SH); px(e, 6, 1, 2, S); px(out, 5, 1, 1, S); px(out, 4, 1, 1, S); }
+        if (pose === "hold")  { px(e, 8, 1, 1, SH); px(out, 3, 1, 5, S); }
         if (pose === "hip")   { px(e, 8, 1, 1, SH); px(out, 9, 1, 2, S); px(e, 11, 1, 1, S); }
         if (pose === "point") { px(e, 8, 1, 1, SH); px(out, 7, 1, 1, S); px(out, 6, 1, 1, S); px(out, 5, 1, 1, S); px(out, 3, 1, 2, S); }
         if (pose === "selfie"){ px(e, 8, 1, 1, SH); px(e, 5, 1, 3, S); px(e, 4, 1, 1, S); px(e, 2, 1, 2, "#9a96a0"); px(e - 1, 0, 2, 2, "#111"); }
         if (pose === "cam")   { px(e, 8, 1, 1, SH); px(e, 7, 1, 1, S); }
-        if (pose === "bag")   { px(e, 8, 1, 2, SH); px(e, 10, 1, 1, S); px(out - (side < 0 ? 0 : 0), 11, 2, 3, o.bag || "#b64dff"); px(out, 10, 1, 1, "#e8dcc0"); }
+        if (pose === "bag")   { px(e, 8, 1, 2, SH); px(e, 10, 1, 1, S); px(out, 11, 2, 3, o.bag || "#b64dff"); px(out, 10, 1, 1, "#e8dcc0"); }
       }
-      arm(-1, L); arm(1, R);
-      // head
+      arm(-1, o.armL || "down"); arm(1, o.armR || "down");
       px(4, 7, 2, 1, S);
       px(3, 2, 4, 5, S);
       px(3, 2, 4, 1, o.hair);
       if (o.longHair) { px(3, 3, 1, 3, o.hair); px(6, 3, 1, 3, o.hair); }
-      if (o.cam) {                                   // camera up to the face
-        px(5, 3, 4, 3, "#111"); px(9, 4, 1, 1, "#6a6a78"); px(6, 2, 1, 1, "#333");
-        px(4, 4, 1, 1, "#111");
-      } else if (!o.blink) {
-        px(4, 4, 1, 1, "#111"); px(6, 4, 1, 1, "#111");
-      }
-      if (o.lookUp && !o.cam) { ctx.fillStyle = S; } // (eyes stay; head tilt reads from the arm)
-      if (o.hat === "sun") { px(1, 1, 8, 1, o.hatc); px(3, 0, 4, 1, o.hatc); px(3, 1, 4, 1, "#d4141e"); px(1, 1, 2, 1, o.hatc); }
+      if (o.cam) { px(5, 3, 4, 3, "#111"); px(9, 4, 1, 1, "#6a6a78"); px(6, 2, 1, 1, "#333"); px(4, 4, 1, 1, "#111"); }
+      else if (!o.blink) { px(4, 4, 1, 1, "#111"); px(6, 4, 1, 1, "#111"); }
+      if (o.shout) { px(4, 6, 2, 1, "#5a1a1a"); }       // mouth open, chanting
+      if (o.hat === "sun") { px(1, 1, 8, 1, o.hatc); px(3, 0, 4, 1, o.hatc); px(3, 1, 4, 1, "#d4141e"); }
       if (o.hat === "cap") { px(3, 1, 4, 1, o.hatc); px(3, 2, 4, 1, o.hatc); px(7, 2, 2, 1, o.hatc); }
     }
 
-    function flash(x, y, k) {               // camera flash burst, k in 0..1
+    function flash(x, y, k) {
       ctx.save();
       ctx.globalAlpha = 1 - k;
       ctx.fillStyle = "#ffffff";
@@ -194,52 +221,150 @@
       selfie:  { skin: "#8d5524", hair: "#111", shirt: "#b64dff", print: "#f6ff3a", shorts: "#2a2a2a" },
       fan:     { skin: "#d9a066", hair: "#3b2314", hat: "sun", hatc: "#f4efe2", shirt: "#f6ff3a", print: "#d4141e", shorts: "#3b5b8a" }
     };
+    var IDS = ["shooter", "poser", "selfie", "fan", "walker"];
     function o(base, extra) { var r = {}, k; for (k in base) r[k] = base[k]; for (k in extra) r[k] = extra[k]; return r; }
 
-    function draw(t) {
-      ctx.clearRect(0, 0, W, H);
-      var s = t / 1000;
-
-      // the couple on the left: one poses, the other shoots
+    // ---- what everyone is doing on an ordinary night ----
+    function everyday(s) {
+      var L = {}, flashes = [];
       var xs = Math.round(W * 0.04), xp = Math.round(W * 0.2);
       var c = s % 4.8, pose;
-      if (c < 1.6) pose = { armL: "down", armR: Math.floor(s / 0.3) % 2 ? "up" : "up2" };   // waving
-      else if (c < 3.2) pose = { armL: "up", armR: "up" };                                  // arms up, big smile
-      else pose = { armL: "hip", armR: "hip" };                                              // hands on hips
-      person(xp, o(cast.poser, pose), false);
-      person(xs, o(cast.shooter, { cam: true, armL: "cam", armR: "cam" }), false);
+      if (c < 1.6) pose = { armL: "down", armR: Math.floor(s / 0.3) % 2 ? "up" : "up2" };
+      else if (c < 3.2) pose = { armL: "up", armR: "up" };
+      else pose = { armL: "hip", armR: "hip" };
+      L.poser = { x: xp, o: o(cast.poser, pose), flip: false };
+      L.shooter = { x: xs, o: o(cast.shooter, { cam: true, armL: "cam", armR: "cam" }), flip: false };
       var fk = (c - 2.4) / 0.25;
-      if (fk >= 0 && fk < 1) flash(xs + 10, H - 16, fk);
+      if (fk >= 0 && fk < 1) flashes.push([xs + 10, FEET + 4, fk]);
 
-      // selfie on the right
-      var xf = Math.round(W * 0.74);
-      var sc = s % 5.3;
-      person(xf, o(cast.selfie, { armR: "selfie", armL: sc > 3.6 ? "up" : "down", blink: sc > 0.6 && sc < 0.75 }), false);
+      var xf = Math.round(W * 0.74), sc = s % 5.3;
+      L.selfie = { x: xf, o: o(cast.selfie, { armR: "selfie", armL: sc > 3.6 ? "up" : "down", blink: sc > 0.6 && sc < 0.75 }), flip: false };
       var sk = (sc - 4.2) / 0.25;
-      if (sk >= 0 && sk < 1) flash(xf + 8, H - 20, sk);
+      if (sk >= 0 && sk < 1) flashes.push([xf + 8, FEET, sk]);
 
-      // the admirer at the far right, facing the sign
-      var xa = Math.round(W * 0.88);
-      var ac = s % 7.5;
+      var xa = Math.round(W * 0.88), ac = s % 7.5;
       var apose = ac < 3 ? { armL: "hip", armR: "hip" } : ac < 5.5 ? { armR: "point", armL: "down" } : { blink: ac > 6.2 && ac < 6.35 };
-      person(xa, o(cast.fan, apose), true);
+      L.fan = { x: xa, o: o(cast.fan, apose), flip: true };
 
-      // a tourist strolling across with shopping, who stops to point up at the sign
-      var walkV = 7;                                   // art px per second
-      var stopAt = W * 0.5, pause = 3.2;
+      var walkV = 7, stopAt = W * 0.5, pause = 3.2;
       var leg1 = (stopAt + 12) / walkV, leg2 = (W - stopAt + 12) / walkV;
-      var cyc = leg1 + pause + leg2 + 2.5;
-      var wc = s % cyc, wx, wpose;
-      if (wc < leg1) { wx = -12 + wc * walkV; wpose = { legs: Math.floor(s / 0.25) % 2 ? "a" : "b", armL: "bag" }; }
-      else if (wc < leg1 + pause) { wx = stopAt; wpose = { armL: "bag", armR: "point" }; }
-      else if (wc < leg1 + pause + leg2) { wx = stopAt + (wc - leg1 - pause) * walkV; wpose = { legs: Math.floor(s / 0.25) % 2 ? "a" : "b", armL: "bag" }; }
+      var cyc = leg1 + pause + leg2 + 2.5, wc = s % cyc, wx, wpose = { armL: "bag" };
+      var step = Math.floor(s / 0.25) % 2 ? "a" : "b";
+      if (wc < leg1) { wx = -12 + wc * walkV; wpose.legs = step; }
+      else if (wc < leg1 + pause) { wx = stopAt; wpose.armR = "point"; }
+      else if (wc < leg1 + pause + leg2) { wx = stopAt + (wc - leg1 - pause) * walkV; wpose.legs = step; }
       else wx = W + 20;
-      if (wx < W + 12) person(wx, o(cast.walker, wpose), false);
+      L.walker = { x: wx, o: o(cast.walker, wpose), flip: false };
+      return { L: L, flashes: flashes };
     }
+
+    // ---- where everyone stands for the protest ----
+    function protestSpots() {
+      var bx = Math.round(W / 2 - BW / 2);
+      return {
+        bx: bx,
+        poser:   bx - 5,                       // left pole
+        fan:     bx + BW - 5,                  // right pole
+        selfie:  Math.round(bx + BW / 2 - 5),  // middle, holding the hem
+        shooter: bx - 19,                      // cheering on the left
+        walker:  bx + BW + 9                   // cheering on the right
+      };
+    }
+
+    // ---- state machine: "day" -> "rally" (sign off) -> "home" (sign back on) -> "day" ----
+    var mode = "day", tMode = 0, from = {}, lastX = {};
+    var RUN = 650, UNFURL = 750, ROLLUP = 350;
+
+    function ease(k) { return 1 - Math.pow(1 - Math.min(Math.max(k, 0), 1), 3); }
+
+    function drawBanner(bx, reveal, now) {
+      var by = FEET + 3 - BH;                  // hem sits at the holders' raised hands
+      var cols = Math.round(BW * reveal);
+      // poles
+      ctx.fillStyle = "#9a96a0";
+      ctx.fillRect(bx - 1, by - 1, 1, FEET + 4 - by + 1);
+      if (reveal > 0.98) ctx.fillRect(bx + BW, by - 1, 1, FEET + 4 - by + 1);
+      for (var x = 0; x < cols; x++) {
+        // big banner ripples like cloth; the small (phone) one bobs as a whole so the letters stay crisp
+        var dy = BS > 1
+          ? Math.round(Math.sin(x / BS * 0.22 - now * 0.006) * 1.2 * (reveal > 0.98 ? 1 : 0.4))
+          : (reveal > 0.98 ? Math.round(Math.sin(now * 0.005) * 0.6) : 0);
+        ctx.drawImage(banner, x, 0, 1, BH, bx + x, by + dy, 1, BH);
+      }
+      if (reveal < 0.98) {                     // the roll, still unrolling
+        ctx.fillStyle = "#d9d2bf";
+        ctx.fillRect(bx + cols, by - 1, 2 * BS, BH + 2);
+        ctx.fillStyle = "#b8b09a";
+        ctx.fillRect(bx + cols + BS, by - 1, BS, BH + 2);
+      }
+    }
+
+    function draw(now) {
+      ctx.clearRect(0, 0, W, H);
+      var s = now / 1000, t = now - tMode;
+      var day = everyday(s), spots = protestSpots(), L = day.L;
+      var people = [], reveal = 0, k, i, id, run = Math.floor(now / 100) % 2 ? "a" : "b";
+
+      if (mode === "day") {
+        IDS.forEach(function (id) { people.push([id, L[id].x, L[id].o, L[id].flip]); });
+        day.flashes.forEach(function (f) { flash(f[0], f[1], f[2]); });
+      } else if (mode === "rally") {
+        k = ease(t / RUN);
+        var chant = Math.floor(now / 380) % 2;
+        IDS.forEach(function (id) {
+          var x = from[id] + (spots[id] - from[id]) * k;
+          var running = t < RUN;
+          var pose = { legs: running ? run : null };
+          if (!running) {
+            if (id === "poser")   pose = { armL: "down", armR: "hold" };
+            if (id === "fan")     pose = { armL: "hold", armR: "down" };
+            if (id === "selfie")  pose = { armL: "hold", armR: "hold", shout: chant };
+            if (id === "shooter") pose = { armL: chant ? "up" : "up2", armR: chant ? "up2" : "up", hop: chant, shout: chant };
+            if (id === "walker")  pose = { armL: chant ? "up2" : "up", armR: chant ? "up" : "up2", hop: !chant, shout: !chant };
+            if (id === "poser" || id === "fan") pose.shout = chant;
+          }
+          var flip = running ? spots[id] < from[id] : (id === "walker" || id === "fan");
+          people.push([id, x, o(cast[id], pose), flip]);
+        });
+        reveal = t < RUN ? 0 : Math.min((t - RUN) / UNFURL, 1);
+      } else if (mode === "home") {
+        reveal = Math.max(1 - t / ROLLUP, 0);
+        k = ease((t - ROLLUP) / RUN);
+        IDS.forEach(function (id) {
+          var target = L[id].x, x = t < ROLLUP ? from[id] : from[id] + (target - from[id]) * k;
+          var going = t >= ROLLUP && k < 1;
+          var pose = going ? { legs: run } : { armL: "hold", armR: "hold" };
+          people.push([id, x, going ? o(cast[id], pose) : (t < ROLLUP ? o(cast[id], pose) : L[id].o), going ? target < from[id] : L[id].flip]);
+        });
+        if (t > ROLLUP + RUN) mode = "day";
+      }
+
+      // banner behind the people holding it
+      if (reveal > 0) drawBanner(spots.bx, reveal, now);
+      for (i = 0; i < people.length; i++) {
+        lastX[people[i][0]] = people[i][1];
+        if (people[i][1] > -14 && people[i][1] < W + 14) person(people[i][1], people[i][2], people[i][3]);
+      }
+    }
+
+    // the sign's own click handler runs first, so by now .off reflects the new state
+    sign.addEventListener("click", function () {
+      var now = performance.now();
+      IDS.forEach(function (id) {
+        var x = lastX[id];
+        if (x === undefined || x > W + 10) x = W + 12;      // the stroller may be offstage
+        if (x < -12) x = -12;
+        from[id] = x;
+      });
+      mode = sign.classList.contains("off") ? "rally" : "home";
+      tMode = reduce ? now - 5000 : now;                    // reduced motion: skip straight to the end
+      if (reduce) draw(now);
+    });
+
+    window.addEventListener("resize", function () { if (size()) draw(performance.now()); });
 
     if (reduce) { draw(2600); return; }
 
-    // ~12fps, and only while the sign is on screen
     var visible = true, last = 0;
     if ("IntersectionObserver" in window) {
       new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(cv.parentNode.parentNode);
