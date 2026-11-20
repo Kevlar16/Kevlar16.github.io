@@ -16,7 +16,7 @@
 * { box-sizing: border-box; }
 
 html { background: var(--bg); overflow-x: clip; }
-body { overflow-x: clip; }
+body { overflow-x: clip; position: relative; }
 
 body {
   margin: 0;
@@ -383,7 +383,8 @@ footer {
 /* ---------- parade ---------- */
 
 .parade {
-  position: fixed;
+  /* pinned to the very bottom of the page, not the screen: the stage is down there */
+  position: absolute;
   left: 0; right: 0; bottom: 0;
   height: 84px;
   pointer-events: none;
