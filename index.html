@@ -11,7 +11,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Yellowtail&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Press+Start+2P&family=Yellowtail&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,13 +19,50 @@
 
     <!-- the sign. click it to flip the power. -->
     <header>
-      <button class="sign" id="sign" type="button" aria-label="neon sign reading keval patel. click to flip the power.">
-        <span class="bulbs" aria-hidden="true"></span>
-        <svg class="star star-a" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 0 L23 17 L40 20 L23 23 L20 40 L17 23 L0 20 L17 17 Z"/></svg>
-        <svg class="star star-b" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 0 L23 17 L40 20 L23 23 L20 40 L17 23 L0 20 L17 17 Z"/></svg>
-        <span class="sign-pre">welcome to</span>
-        <h1 class="neon">keval pa<span class="dying">t</span>el</h1>
-        <span class="sign-post">las vegas &middot; nevada</span>
+      <h1 class="sr">keval patel</h1>
+      <button class="sign" id="sign" type="button" aria-label="neon sign reading welcome to keval patel, las vegas nevada. click to flip the power.">
+        <svg viewBox="0 0 600 330" aria-hidden="true">
+          <defs>
+            <filter id="blur-lg" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+            <filter id="blur-sm" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>
+            <radialGradient id="wash" cx="50%" cy="60%" r="55%">
+              <stop offset="0" stop-color="#b64dff" stop-opacity=".2"/>
+              <stop offset="1" stop-color="#b64dff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <!-- star on its post -->
+          <g class="topstar">
+            <rect x="437" y="40" width="6" height="22" class="post"/>
+            <path class="star" d="M440 2 L446 24 L470 30 L446 36 L440 58 L434 36 L410 30 L434 24 Z"/>
+          </g>
+
+          <!-- body -->
+          <path class="body" d="M110,60 L490,60 L585,180 L490,300 L110,300 L15,180 Z"/>
+          <path class="wash" d="M110,60 L490,60 L585,180 L490,300 L110,300 L15,180 Z" fill="url(#wash)"/>
+          <path class="trim" d="M117,70 L483,70 L571,180 L483,290 L117,290 L29,180 Z"/>
+          <path id="track" class="track" d="M124,79 L476,79 L559,180 L476,281 L124,281 L41,180 Z"/>
+          <g id="bulbs"></g>
+
+          <!-- w e l c o m e -->
+          <g class="coins">
+            <g transform="translate(132 112)"><circle r="23"/><text y="9">w</text></g>
+            <g transform="translate(188 112)"><circle r="23"/><text y="9">e</text></g>
+            <g transform="translate(244 112)"><circle r="23"/><text y="9">l</text></g>
+            <g transform="translate(300 112)"><circle r="23"/><text y="9">c</text></g>
+            <g transform="translate(356 112)"><circle r="23"/><text y="9">o</text></g>
+            <g transform="translate(412 112)"><circle r="23"/><text y="9">m</text></g>
+            <g transform="translate(468 112)"><circle r="23"/><text y="9">e</text></g>
+          </g>
+
+          <text class="to" x="300" y="160">to</text>
+
+          <text class="name halo" x="300" y="226" filter="url(#blur-lg)">keval pa<tspan class="dying">t</tspan>el</text>
+          <text class="name glow" x="300" y="226" filter="url(#blur-sm)">keval pa<tspan class="dying">t</tspan>el</text>
+          <text class="name core" x="300" y="226">keval pa<tspan class="dying">t</tspan>el</text>
+
+          <text class="nv" x="300" y="268">las vegas &middot; nevada</text>
+        </svg>
       </button>
 
       <p class="bio">
@@ -37,8 +74,8 @@
 
     <section>
       <h2>about</h2>
-      <p>i'm religious. faith comes first, everything else after.</p>
-      <p>i grew up in a city built in the middle of a desert, so i've never bought "you can't build there." i build for the places software forgot: remote sites, open land, the edges of the map.</p>
+      <p class="keep-case"><em>Ad majorem Dei gloriam.</em></p>
+      <p>i like maps and geography. i build to serve the land that other software forgot.</p>
     </section>
 
     <section>
@@ -47,12 +84,12 @@
         <li>
           <span class="what"><span class="role">ceo</span> <a href="https://userattlesnake.com">rattlesnake</a></span>
           <span class="when">nov 2026 &ndash; present</span>
-          <span class="note">monitoring and alerts for remote, high-value sites.</span>
+          <span class="note">prediction layer on top of surveillance systems.</span>
         </li>
         <li>
           <span class="what"><span class="role">swe</span> <a href="https://mireye.com">mireye</a></span>
           <span class="when">jul 2026 &ndash; nov 2026</span>
-          <span class="note">physical-world context for ai agents.</span>
+          <span class="note">on the original team. built demos and mapping software.</span>
         </li>
         <li>
           <span class="what"><span class="role">gis</span> <a href="https://www.cityofhenderson.com">city of henderson</a></span>
@@ -78,8 +115,22 @@
           <span class="note">learns what a retail chain's existing stores have in common, then scores a new address against that pattern.</span>
         </li>
         <li>
+          <span class="what"><a href="https://github.com/Kevlar16/is-my-home-livable">is my home livable</a></span>
+          <span class="note">give it any us address and it tells you whether it's livable, from things like distance to the nearest fire station and road.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>publications</h2>
+      <ul class="rows">
+        <li>
+          <span class="what"><a href="https://www.lpnevada.org/zoning">las vegas was not supposed to work</a></span>
+          <span class="note">how laws governing land shaped the growth of las vegas.</span>
+        </li>
+        <li>
           <span class="what"><a href="https://glintopenaccess.com/Economic/Abstract/Abstract-26-17">the geographic externality tax</a></span>
-          <span class="note">a spatial pigouvian tax: a firm's liability rises with the distance between a transaction and the place its decisions get made. published 2026.</span>
+          <span class="note">a spatial pigouvian tax: a firm's liability rises with the distance between a transaction and the place its decisions get made.</span>
         </li>
       </ul>
     </section>
@@ -103,15 +154,35 @@
       </dl>
     </section>
 
+    <!-- one last pull -->
+    <section class="slots-wrap" aria-label="slot machine">
+      <div class="slot" id="slot">
+        <div class="slot-top"><span id="slot-msg">insert coin</span></div>
+        <div class="reels">
+          <div class="reel"><span>7</span></div>
+          <div class="reel"><span>7</span></div>
+          <div class="reel"><span>7</span></div>
+        </div>
+        <div class="slot-base"></div>
+        <button class="lever" id="lever" type="button" aria-label="pull the lever"><i class="knob"></i><i class="arm"></i></button>
+        <div class="coins-fx" id="coins-fx" aria-hidden="true"></div>
+      </div>
+    </section>
+
     <footer>
-      <a href="https://github.com/Kevlar16">github</a>
-      <span class="dim">/</span>
-      <a id="mail" href="#">email</a>
-      <span class="dim">/</span>
-      <a href="https://github.com/Kevlar16/Kevlar16.github.io">source</a>
+      <dl class="skills">
+        <dt>contact</dt>
+        <dd><a id="mail" href="#">email me</a></dd>
+        <dt>linkedin</dt>
+        <dd><a href="https://www.linkedin.com/in/kevalpatelnevada/">kevalpatelnevada</a></dd>
+      </dl>
     </footer>
 
   </main>
+
+  <!-- showgirls on parade while you scroll -->
+  <div class="parade" id="parade" aria-hidden="true"></div>
+
   <script src="main.js"></script>
 </body>
 </html>
