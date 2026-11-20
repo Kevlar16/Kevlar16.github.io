@@ -387,19 +387,18 @@ footer {
   left: 0; right: 0; bottom: 0;
   height: 84px;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity .35s steps(4);
   z-index: 10;
   overflow: hidden;
 }
 .parade::before {
-  /* a strip of stage lights */
+  /* the stage edge: dark until the girls arrive, then it stays lit */
   content: "";
   position: absolute; left: 0; right: 0; bottom: 0; height: 6px;
   background: repeating-linear-gradient(90deg, var(--yellow) 0 6px, transparent 6px 18px);
-  opacity: .8;
+  opacity: 0;
+  transition: opacity .4s steps(4);
 }
-.parade.on { opacity: 1; }
+.parade.lit::before { opacity: .8; }
 .parade img {
   position: absolute; bottom: 6px; left: 0;
   width: 45px; height: 72px;

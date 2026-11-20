@@ -509,15 +509,14 @@
     girls.push(img);
   }
 
-  // first scroll sets the line walking; it crosses once and leaves the stage
+  // reaching the very bottom lights the stage edge and sends the line across once.
+  // if the slot machine is mid-payout, they wait for the coins to land first.
   function walk() {
-    window.removeEventListener("scroll", walk);
     var vw = window.innerWidth;
     var from = -GIRLS * GAP, to = vw + 40;
     var SPEED = 170; // px per second
     var dur = (to - from) / SPEED * 1000;
     var t0 = performance.now();
-    parade.classList.add("on");
     (function frame(now) {
       var el = now - t0;
       var x0 = from + (to - from) * Math.min(el / dur, 1);
@@ -527,13 +526,24 @@
         girls[i].src = frames[(step + i) % 2];
       }
       if (el < dur) requestAnimationFrame(frame);
-      else parade.classList.remove("on");
     })(t0);
   }
 
-  if (!reduce) {
+  function walkWhenClear(waited) {
+    var busy = spinning || payoutBusy || (canPayout && !paid);
+    if (busy && waited < 7000) { setTimeout(function () { walkWhenClear(waited + 200); }, 200); return; }
+    walk();
+  }
+
+  if (!reduce && "IntersectionObserver" in window) {
     girls.forEach(function (g) { g.style.transform = "translateX(-200px)"; });
-    window.addEventListener("scroll", walk, { passive: true });
+    var endIO = new IntersectionObserver(function (es) {
+      if (!es[0].isIntersecting) return;
+      endIO.disconnect();
+      parade.classList.add("lit");          // the dotted stage edge comes on and stays
+      setTimeout(function () { walkWhenClear(0); }, 400);
+    });
+    endIO.observe(document.getElementById("end"));
   }
 
   /* ---------- slot machine ---------- */
@@ -607,8 +617,10 @@
   var paid = false;
 
   // coins burst out, scatter, then fall into place as the contact details
+  var payoutBusy = false;
   function payout() {
     paid = true;
+    payoutBusy = true;
     var sr = slot.getBoundingClientRect();
     var ox = sr.left + sr.width / 2 + window.scrollX;
     var oy = sr.top + sr.height * 0.5 + window.scrollY;
@@ -656,7 +668,7 @@
         }
       });
       if (alive) requestAnimationFrame(tick);
-      else payoutEl.classList.remove("pending");
+      else { payoutEl.classList.remove("pending"); payoutBusy = false; }
     })(start);
   }
 
