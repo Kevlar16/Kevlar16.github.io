@@ -134,6 +134,34 @@ a:hover, a:focus-visible {
 
 .bio { margin: 26px 0 0; }
 
+/* pronunciation, on hover or tap */
+.say {
+  position: relative;
+  color: var(--yellow);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: help;
+  outline: none;
+}
+.say::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 0; bottom: calc(100% + 8px);
+  padding: 4px 9px;
+  white-space: nowrap;
+  color: var(--yellow);
+  background: #050505;
+  border: 1px solid var(--purple);
+  box-shadow: 0 0 10px rgba(182, 77, 255, .35);
+  font-size: 12px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .12s, transform .12s;
+}
+.say:hover::after,
+.say:focus::after { opacity: 1; transform: translateY(0); }
+
 section { margin-top: 44px; }
 
 h2 {
