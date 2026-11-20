@@ -1,5 +1,3 @@
-# keval.vegas
+# kevalpa.tel
 
-personal site. plain html, css, and a little javascript. no build step.
-
-hosted on github pages.
+personal site...
