@@ -147,6 +147,16 @@ a:hover, a:focus-visible {
   10%, 24%, 40%, 100% { opacity: 1; }
 }
 
+/* tourists in front of the sign (drawn by main.js) */
+.plaza { position: relative; height: 0; }
+.plaza canvas {
+  position: absolute;
+  left: 0; bottom: 3px;
+  width: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
 /* ---------- content ---------- */
 
 .bio { margin: 26px 0 0; }

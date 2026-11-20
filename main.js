@@ -106,6 +106,143 @@
 
   if (!reduce) ignite();
 
+  /* ---------- tourists in front of the sign ---------- */
+
+  (function () {
+    var cv = document.getElementById("tourists");
+    if (!cv) return;
+    var ctx = cv.getContext("2d");
+    var P = 2, H = 22, W = 0;
+
+    function size() {
+      W = Math.floor(cv.parentNode.clientWidth / P);
+      cv.width = W; cv.height = H;
+      cv.style.height = H * P + "px";
+    }
+    size();
+    window.addEventListener("resize", size);
+
+    // one person, 10x20 art px, feet on the bottom row. flip = face left.
+    function person(x0, o, flip) {
+      var y0 = H - 20;
+      function px(x, y, w, h, c) {
+        ctx.fillStyle = c;
+        ctx.fillRect(Math.round(flip ? x0 + 10 - x - w : x0 + x), y0 + y, w, h);
+      }
+      var S = o.skin, SH = o.shirt;
+      // legs, socks, shoes
+      var lx = o.legs === "a" ? [2, 6] : o.legs === "b" ? [3, 7] : [3, 6];
+      px(lx[0], 16, 1, 2, S); px(lx[1], 16, 1, 2, S);
+      px(lx[0], 18, 1, 1, "#f4efe2"); px(lx[1], 18, 1, 1, "#f4efe2");
+      px(lx[0] - 1, 19, 2, 1, "#2a2a2a"); px(lx[1], 19, 2, 1, "#2a2a2a");
+      // shorts
+      px(2, 13, 6, 2, o.shorts); px(2, 15, 2, 1, o.shorts); px(6, 15, 2, 1, o.shorts);
+      // shirt + print
+      px(2, 8, 6, 5, SH);
+      if (o.print) { px(3, 9, 1, 1, o.print); px(6, 10, 1, 1, o.print); px(4, 11, 1, 1, o.print); px(5, 8, 1, 1, o.print); px(2, 12, 1, 1, o.print); }
+      // arms
+      var L = o.armL || "down", R = o.armR || "down";
+      function arm(side, pose) {
+        var e = side < 0 ? 1 : 8, out = side < 0 ? 0 : 9;
+        if (pose === "down")  { px(e, 8, 1, 2, SH); px(e, 10, 1, 2, S); }
+        if (pose === "up")    { px(e, 8, 1, 1, SH); px(out, 5, 1, 3, S); px(out, 4, 1, 1, S); }
+        if (pose === "up2")   { px(e, 8, 1, 1, SH); px(e, 6, 1, 2, S); px(out, 5, 1, 1, S); px(out, 4, 1, 1, S); }
+        if (pose === "hip")   { px(e, 8, 1, 1, SH); px(out, 9, 1, 2, S); px(e, 11, 1, 1, S); }
+        if (pose === "point") { px(e, 8, 1, 1, SH); px(out, 7, 1, 1, S); px(out, 6, 1, 1, S); px(out, 5, 1, 1, S); px(out, 3, 1, 2, S); }
+        if (pose === "selfie"){ px(e, 8, 1, 1, SH); px(e, 5, 1, 3, S); px(e, 4, 1, 1, S); px(e, 2, 1, 2, "#9a96a0"); px(e - 1, 0, 2, 2, "#111"); }
+        if (pose === "cam")   { px(e, 8, 1, 1, SH); px(e, 7, 1, 1, S); }
+        if (pose === "bag")   { px(e, 8, 1, 2, SH); px(e, 10, 1, 1, S); px(out - (side < 0 ? 0 : 0), 11, 2, 3, o.bag || "#b64dff"); px(out, 10, 1, 1, "#e8dcc0"); }
+      }
+      arm(-1, L); arm(1, R);
+      // head
+      px(4, 7, 2, 1, S);
+      px(3, 2, 4, 5, S);
+      px(3, 2, 4, 1, o.hair);
+      if (o.longHair) { px(3, 3, 1, 3, o.hair); px(6, 3, 1, 3, o.hair); }
+      if (o.cam) {                                   // camera up to the face
+        px(5, 3, 4, 3, "#111"); px(9, 4, 1, 1, "#6a6a78"); px(6, 2, 1, 1, "#333");
+        px(4, 4, 1, 1, "#111");
+      } else if (!o.blink) {
+        px(4, 4, 1, 1, "#111"); px(6, 4, 1, 1, "#111");
+      }
+      if (o.lookUp && !o.cam) { ctx.fillStyle = S; } // (eyes stay; head tilt reads from the arm)
+      if (o.hat === "sun") { px(1, 1, 8, 1, o.hatc); px(3, 0, 4, 1, o.hatc); px(3, 1, 4, 1, "#d4141e"); px(1, 1, 2, 1, o.hatc); }
+      if (o.hat === "cap") { px(3, 1, 4, 1, o.hatc); px(3, 2, 4, 1, o.hatc); px(7, 2, 2, 1, o.hatc); }
+    }
+
+    function flash(x, y, k) {               // camera flash burst, k in 0..1
+      ctx.save();
+      ctx.globalAlpha = 1 - k;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3);
+      ctx.globalAlpha = (1 - k) * 0.35;
+      ctx.beginPath(); ctx.arc(x + 0.5, y + 0.5, 6 + k * 4, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    var cast = {
+      shooter: { skin: "#f1c27d", hair: "#6b4a2a", hat: "cap", hatc: "#d4141e", shirt: "#1fa3a3", print: "#f4efe2", shorts: "#b8a07a" },
+      poser:   { skin: "#c68642", hair: "#111", longHair: true, shirt: "#d4141e", print: "#f6ff3a", shorts: "#3b5b8a" },
+      walker:  { skin: "#e0ac69", hair: "#b8b2a6", hat: "sun", hatc: "#e2c27a", shirt: "#f4efe2", shorts: "#b8a07a", bag: "#b64dff" },
+      selfie:  { skin: "#8d5524", hair: "#111", shirt: "#b64dff", print: "#f6ff3a", shorts: "#2a2a2a" },
+      fan:     { skin: "#d9a066", hair: "#3b2314", hat: "sun", hatc: "#f4efe2", shirt: "#f6ff3a", print: "#d4141e", shorts: "#3b5b8a" }
+    };
+    function o(base, extra) { var r = {}, k; for (k in base) r[k] = base[k]; for (k in extra) r[k] = extra[k]; return r; }
+
+    function draw(t) {
+      ctx.clearRect(0, 0, W, H);
+      var s = t / 1000;
+
+      // the couple on the left: one poses, the other shoots
+      var xs = Math.round(W * 0.04), xp = Math.round(W * 0.2);
+      var c = s % 4.8, pose;
+      if (c < 1.6) pose = { armL: "down", armR: Math.floor(s / 0.3) % 2 ? "up" : "up2" };   // waving
+      else if (c < 3.2) pose = { armL: "up", armR: "up" };                                  // arms up, big smile
+      else pose = { armL: "hip", armR: "hip" };                                              // hands on hips
+      person(xp, o(cast.poser, pose), false);
+      person(xs, o(cast.shooter, { cam: true, armL: "cam", armR: "cam" }), false);
+      var fk = (c - 2.4) / 0.25;
+      if (fk >= 0 && fk < 1) flash(xs + 10, H - 16, fk);
+
+      // selfie on the right
+      var xf = Math.round(W * 0.74);
+      var sc = s % 5.3;
+      person(xf, o(cast.selfie, { armR: "selfie", armL: sc > 3.6 ? "up" : "down", blink: sc > 0.6 && sc < 0.75 }), false);
+      var sk = (sc - 4.2) / 0.25;
+      if (sk >= 0 && sk < 1) flash(xf + 8, H - 20, sk);
+
+      // the admirer at the far right, facing the sign
+      var xa = Math.round(W * 0.88);
+      var ac = s % 7.5;
+      var apose = ac < 3 ? { armL: "hip", armR: "hip" } : ac < 5.5 ? { armR: "point", armL: "down" } : { blink: ac > 6.2 && ac < 6.35 };
+      person(xa, o(cast.fan, apose), true);
+
+      // a tourist strolling across with shopping, who stops to point up at the sign
+      var walkV = 7;                                   // art px per second
+      var stopAt = W * 0.5, pause = 3.2;
+      var leg1 = (stopAt + 12) / walkV, leg2 = (W - stopAt + 12) / walkV;
+      var cyc = leg1 + pause + leg2 + 2.5;
+      var wc = s % cyc, wx, wpose;
+      if (wc < leg1) { wx = -12 + wc * walkV; wpose = { legs: Math.floor(s / 0.25) % 2 ? "a" : "b", armL: "bag" }; }
+      else if (wc < leg1 + pause) { wx = stopAt; wpose = { armL: "bag", armR: "point" }; }
+      else if (wc < leg1 + pause + leg2) { wx = stopAt + (wc - leg1 - pause) * walkV; wpose = { legs: Math.floor(s / 0.25) % 2 ? "a" : "b", armL: "bag" }; }
+      else wx = W + 20;
+      if (wx < W + 12) person(wx, o(cast.walker, wpose), false);
+    }
+
+    if (reduce) { draw(2600); return; }
+
+    // ~12fps, and only while the sign is on screen
+    var visible = true, last = 0;
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(cv.parentNode.parentNode);
+    }
+    (function loop(now) {
+      if (visible && now - last > 83) { last = now; draw(now); }
+      requestAnimationFrame(loop);
+    })(performance.now());
+  })();
+
   /* ---------- the rattlesnake heist ----------
      hover the rattlesnake link in the bio: a snake slithers to the edge of the
      screen, a mobster runs in, snatches it, and runs off with it. */
