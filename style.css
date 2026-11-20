@@ -58,6 +58,8 @@ a:hover, a:focus-visible {
 /* ---------- the sign ---------- */
 
 .sign {
+  position: relative;
+  isolation: isolate;
   display: block;
   width: 100%;
   margin: 0;
@@ -68,6 +70,20 @@ a:hover, a:focus-visible {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+.sign::before {
+  content: "";
+  position: absolute;
+  inset: -14% -10%;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 50% 46% at 50% 56%, rgba(182, 77, 255, .26), transparent 70%),
+    radial-gradient(ellipse 30% 24% at 50% 30%, rgba(246, 255, 58, .07), transparent 70%);
+  filter: blur(18px);
+  pointer-events: none;
+  transition: opacity .15s;
+}
+.sign.off::before { opacity: 0; }
+.sign:has(svg.fx-brown)::before { opacity: .45; }
 .sign:focus-visible { outline: 1px dashed var(--yellow); outline-offset: 6px; }
 .sign svg { display: block; width: 100%; height: auto; overflow: visible; }
 
@@ -171,6 +187,7 @@ h2 {
   font-weight: 600;
   letter-spacing: .12em;
   color: var(--purple);
+  text-shadow: 0 0 6px rgba(182, 77, 255, .5), 0 0 18px rgba(182, 77, 255, .18);
 }
 h2::before { content: "// "; color: var(--dim); }
 
@@ -209,7 +226,45 @@ footer {
 
 /* ---------- slot machine ---------- */
 
-.slots-wrap { margin-top: 64px; display: flex; justify-content: center; }
+.slots-wrap {
+  margin-top: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---------- payout (contact) ---------- */
+
+.payout { margin-top: 34px; }
+.payout .skills { grid-template-columns: 6em auto; }
+.payout dt { transition: opacity .4s; }
+.payout .ch { display: inline-block; white-space: pre; }
+.payout a { transition: border-color .5s; }
+.payout.pending a { border-bottom-color: transparent; }
+.payout.pending dt,
+.payout.pending .ch { opacity: 0; }
+.payout .ch.land { animation: land .35s ease-out; }
+@keyframes land {
+  0%   { color: #fff; text-shadow: 0 0 10px var(--yellow); }
+  100% { text-shadow: none; }
+}
+
+.gold {
+  position: absolute;
+  z-index: 20;
+  width: 18px; height: 18px;
+  margin: -9px 0 0 -9px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: inset -2px -2px 0 #9a8f00, 0 0 8px rgba(246, 255, 58, .55);
+  color: #2a0a4a;
+  font: 8px/1 var(--pixel);
+  text-transform: none;
+  pointer-events: none;
+  will-change: transform;
+}
 
 .slot {
   --px: 4px;

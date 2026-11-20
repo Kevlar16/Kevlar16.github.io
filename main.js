@@ -124,6 +124,24 @@
   mail.href = "mailto:" + addr;
   mail.textContent = addr;
 
+  var payoutEl = document.getElementById("payout");
+  var chars = [];
+  [mail, document.getElementById("li")].forEach(function (a) {
+    var t = a.textContent;
+    a.setAttribute("aria-label", t);
+    a.textContent = "";
+    for (var q = 0; q < t.length; q++) {
+      var sp = document.createElement("span");
+      sp.className = "ch";
+      sp.setAttribute("aria-hidden", "true");
+      sp.textContent = t[q];
+      a.appendChild(sp);
+      chars.push(sp);
+    }
+  });
+  var canPayout = !reduce && "IntersectionObserver" in window;
+  if (canPayout) payoutEl.classList.add("pending");
+
   /* ---------- pixel showgirls ---------- */
 
   var PAL = { Y: "#f6ff3a", P: "#b64dff", p: "#6a1fb8", s: "#d9a066", h: "#3b2314" };
@@ -273,7 +291,7 @@
     if (r[0] === r[1] && r[1] === r[2]) {
       msg.textContent = r[0] === "7" ? "jackpot!" : "winner!";
       slot.classList.add("win");
-      rain();
+      if (!paid && canPayout) payout(); else rain();
     } else if (r[0] === r[1] || r[1] === r[2]) {
       msg.textContent = "so close";
     } else {
@@ -286,13 +304,74 @@
     return [0, 1, 2].map(function () { return SYMS[Math.floor(Math.random() * SYMS.length)]; });
   }
 
-  lever.addEventListener("click", function () { spin(reduce ? ["7", "7", "7"] : randomResult()); });
+  var paid = false;
 
-  // first pull is on the house
-  if (!reduce && "IntersectionObserver" in window) {
+  // coins burst out, scatter, then fall into place as the contact details
+  function payout() {
+    paid = true;
+    var sr = slot.getBoundingClientRect();
+    var ox = sr.left + sr.width / 2 + window.scrollX;
+    var oy = sr.top + sr.height * 0.5 + window.scrollY;
+    var parts = chars.map(function (ch, i) {
+      var el = document.createElement("i");
+      el.className = "gold";
+      el.textContent = ch.textContent;
+      el.style.left = "0"; el.style.top = "0";
+      document.body.appendChild(el);
+      var ang = -Math.PI / 2 + (Math.random() - 0.5) * 2.6;
+      var spd = 4 + Math.random() * 7;
+      return { el: el, ch: ch, x: ox, y: oy, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+               t0: 750 + i * 24, fly: false, done: false };
+    });
+    var dts = payoutEl.querySelectorAll("dt");
+    setTimeout(function () { dts.forEach(function (d) { d.style.opacity = 1; }); }, 750);
+
+    function put(p, x, y, s) { p.el.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) scale(" + s.toFixed(2) + ")"; }
+    var start = performance.now();
+    (function tick(now) {
+      var el = now - start, alive = false;
+      parts.forEach(function (p) {
+        if (p.done) return;
+        alive = true;
+        if (el < p.t0) {                         // scatter under gravity
+          p.vy += 0.32; p.vx *= 0.985;
+          p.x += p.vx; p.y += p.vy;
+          put(p, p.x, p.y, 1);
+        } else {                                 // fall into its letter
+          if (!p.fly) {
+            p.fly = true; p.fx = p.x; p.fy = p.y;
+            var r = p.ch.getBoundingClientRect();
+            p.tx = r.left + r.width / 2 + window.scrollX;
+            p.ty = r.top + r.height / 2 + window.scrollY;
+          }
+          var k = Math.min((el - p.t0) / 520, 1);
+          var ex = 1 - Math.pow(1 - k, 3);
+          put(p, p.fx + (p.tx - p.fx) * ex, p.fy + (p.ty - p.fy) * k * k, 1 - 0.4 * k);
+          if (k >= 1) {
+            p.done = true;
+            p.el.remove();
+            p.ch.style.opacity = 1;
+            p.ch.classList.add("land");
+          }
+        }
+      });
+      if (alive) requestAnimationFrame(tick);
+      else payoutEl.classList.remove("pending");
+    })(start);
+  }
+
+  lever.addEventListener("click", function () {
+    spin(reduce || (!paid && canPayout) ? ["7", "7", "7"] : randomResult());
+  });
+
+  // first pull is on the house: reaching the bottom spins it
+  if (canPayout) {
     var io = new IntersectionObserver(function (es) {
-      if (es[0].isIntersecting) { io.disconnect(); spin(["7", "7", "7"]); }
-    }, { threshold: 0.7 });
-    io.observe(slot);
+      if (!es[0].isIntersecting || paid) return;
+      if (spinning) return; // a lever pull is already paying out
+      io.disconnect();
+      spin(["7", "7", "7"]);
+    }, { threshold: 0.9 });
+    io.observe(payoutEl);
   }
 })();
