@@ -107,7 +107,7 @@
   if (!reduce) ignite();
 
   /* ---------- the rattlesnake heist ----------
-     hover the rattlesnake link in experience: a snake slithers to the edge of the
+     hover the rattlesnake link in the bio: a snake slithers to the edge of the
      screen, a mobster runs in, snatches it, and runs off with it. */
 
   if (!reduce) {
@@ -185,7 +185,7 @@
       }
     }
 
-    var heistLink = document.querySelector('.rows a[href*="userattlesnake.com"]');
+    var heistLink = document.querySelector('.bio a[href*="userattlesnake.com"]');
     if (heistLink) {
       var heisting = false;
       heistLink.addEventListener("mouseenter", function () {
