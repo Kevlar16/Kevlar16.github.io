@@ -114,13 +114,20 @@
     var ctx = cv.getContext("2d");
     var P = 2, H = 22, W = 0;
 
+    // phones fire "resize" whenever the address bar slides during a scroll. resizing a
+    // canvas wipes it, so only touch it when the width really changed, and redraw at once.
     function size() {
-      W = Math.floor(cv.parentNode.clientWidth / P);
+      var w = Math.floor(cv.parentNode.clientWidth / P);
+      if (w === W) return false;
+      W = w;
       cv.width = W; cv.height = H;
       cv.style.height = H * P + "px";
+      return true;
     }
     size();
-    window.addEventListener("resize", size);
+    window.addEventListener("resize", function () {
+      if (size()) draw(performance.now());
+    });
 
     // one person, 10x20 art px, feet on the bottom row. flip = face left.
     function person(x0, o, flip) {
