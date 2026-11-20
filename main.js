@@ -106,62 +106,163 @@
 
   if (!reduce) ignite();
 
-  /* ---------- a rattlesnake slithers past its links ---------- */
+  /* ---------- the rattlesnake heist ----------
+     hover the rattlesnake link in experience: a snake slithers to the edge of the
+     screen, a mobster runs in, snatches it, and runs off with it. */
 
   if (!reduce) {
-    var SCALE = 3; // css px per snake pixel
-    Array.prototype.forEach.call(document.querySelectorAll('a[href*="userattlesnake.com"]'), function (a) {
-      var busy = false;
-      a.classList.add("has-snake");
-      a.addEventListener("mouseenter", function () {
-        if (busy) return;
-        busy = true;
-        var w = Math.ceil(a.offsetWidth / SCALE) + 40;   // canvas width in snake pixels
-        var h = 9;
+    var P = 3; // css px per art pixel
+    var MOB_PAL = { K: "#111014", b: "#7a0a10", s: "#d9a066", e: "#050505", S: "#34323e",
+                    p: "#76748a", w: "#f4efe2", r: "#d4141e", k: "#0a0a0a" };
+    var MOB_TOP = [
+      "....KKKK....",
+      "...KKKKKK...",
+      "...KbbbbK...",
+      ".KKKKKKKKKK.",
+      "....ssss....",
+      "....sses....",
+      "....ssss....",
+      ".....ss.....",
+      "..SSwrwSS...",
+      ".SSpSrSpSS..",
+      ".SpSSrSSpS..",
+      ".SpSpSSpSS..",
+      ".s.SpSSpS.s.",
+      "...SpSSpS...",
+      "...SSSSSS..."
+    ];
+    var MOB_GRAB_ARM = { 11: ".SpSpSSpSSss", 12: ".s.SpSSpS..." };
+    var LEGS = [
+      ["...SS..SS...", "...SS..SS...", "...SS..SS...", "...SS..SS...", "..kkk..kkk.."],
+      ["...SS...SS..", "..SS.....SS.", ".SS.......S.", ".S........S.", "kk........kk"],
+      ["...SS.SS....", "....SSS.....", "....SS.S....", "...SS..SS...", "..kkk.kkk..."]
+    ];
+    function mobSprite(legs, grab) {
+      var rows = MOB_TOP.map(function (r, i) { return grab && MOB_GRAB_ARM[i] ? MOB_GRAB_ARM[i] : r; }).concat(legs);
+      var cv = document.createElement("canvas");
+      cv.width = 12; cv.height = rows.length;
+      var cx = cv.getContext("2d");
+      rows.forEach(function (row, y) {
+        for (var x = 0; x < row.length; x++) {
+          var col = MOB_PAL[row[x]];
+          if (col) { cx.fillStyle = col; cx.fillRect(x, y, 1, 1); }
+        }
+      });
+      return cv;
+    }
+    var MOB = {
+      stand: mobSprite(LEGS[0], false),
+      run: [mobSprite(LEGS[1], false), mobSprite(LEGS[2], false)],
+      grabRun: [mobSprite(LEGS[1], true), mobSprite(LEGS[2], true)],
+      grab: mobSprite(LEGS[0], true)
+    };
+    var MOB_H = 20, MOB_W = 12;
+    var BODY = "#8a6a3a", DARK = "#4a3418", BELLY = "#c9a86a", RATTLE = "#e8dcc0";
+
+    // draw a snake whose segments are laid out by pos(i) -> [x, y]; i = 0 is the head
+    function drawSnake(ctx, LEN, pos, now, headDir) {
+      for (var i = LEN; i >= 0; i--) {
+        var q = pos(i), x = Math.round(q[0]), y = Math.round(q[1]);
+        if (i >= LEN - 2) {
+          ctx.fillStyle = RATTLE;
+          ctx.fillRect(x, y + (Math.floor(now / 40) % 2 ? -1 : 0), 1, 2);
+        } else {
+          ctx.fillStyle = (i % 4 === 1) ? DARK : BODY;
+          ctx.fillRect(x, y, 1, 2);
+          ctx.fillStyle = BELLY;
+          ctx.fillRect(x, y + 1, 1, 1);
+        }
+        if (i === 0) {
+          ctx.fillStyle = DARK;
+          ctx.fillRect(x - (headDir < 0 ? 1 : 0), y - 1, 2, 3);
+          ctx.fillStyle = "#050505";
+          ctx.fillRect(x + (headDir < 0 ? -1 : 1), y - 1, 1, 1);
+          if (Math.floor(now / 120) % 2) {
+            ctx.fillStyle = "#d4141e";
+            ctx.fillRect(headDir < 0 ? x - 3 : x + 2, y + 1, 2, 1);
+          }
+        }
+      }
+    }
+
+    var heistLink = document.querySelector('.rows a[href*="userattlesnake.com"]');
+    if (heistLink) {
+      var heisting = false;
+      heistLink.addEventListener("mouseenter", function () {
+        if (heisting) return;
+        heisting = true;
+
+        var r = heistLink.getBoundingClientRect();
+        var vw = document.documentElement.clientWidth;
+        var W = Math.floor((vw - r.left) / P);   // strip runs from the link to the screen edge
+        var H = MOB_H + 4;
         var cv = document.createElement("canvas");
-        cv.className = "snake";
-        cv.width = w; cv.height = h;
-        cv.style.width = w * SCALE + "px";
-        cv.style.height = h * SCALE + "px";
-        cv.style.left = -20 * SCALE + "px";
-        a.appendChild(cv);
+        cv.className = "heist";
+        cv.width = W; cv.height = H;
+        cv.style.width = W * P + "px";
+        cv.style.height = H * P + "px";
+        cv.style.left = (r.left + window.scrollX) + "px";
+        cv.style.top = (r.bottom + window.scrollY + 14 - H * P) + "px";
+        document.body.appendChild(cv);
         var ctx = cv.getContext("2d");
-        var LEN = 20, t0 = performance.now(), DUR = 1900;
-        var BODY = "#8a6a3a", DARK = "#4a3418", BELLY = "#c9a86a", RATTLE = "#e8dcc0";
+
+        var GROUND = H - 1;           // feet line
+        var SY = GROUND - 2;          // snake belly line
+        var LEN = 20;
+        var stopX = Math.max(W - 62, 26); // where the snake ends up waiting
+        var SNAKE_V = 0.1;            // art px per ms (~300 css px/s)
+        var tArrive = Math.max(stopX / SNAKE_V, 700);
+        var MOB_V_IN = 0.09, MOB_V_OUT = 0.085;
+        var mobStop = stopX + 2;      // mobster's left edge when he grabs
+        var tMobEnter = Math.max(tArrive - (W + 4 - mobStop) / MOB_V_IN, 0);
+        var tGrab = tMobEnter + (W + 4 - mobStop) / MOB_V_IN;
+        var tLeave = tGrab + 450;
+        var t0 = performance.now();
 
         (function frame(now) {
-          var k = (now - t0) / DUR;
-          var head = Math.round(-4 + (w + LEN + 8) * k);
-          ctx.clearRect(0, 0, w, h);
-          for (var i = LEN; i >= 0; i--) {
-            var x = head - i;
-            if (x < 0 || x >= w) continue;
-            var y = 4 + Math.round(Math.sin(x * 0.55 - now * 0.012) * 2);
-            if (i >= LEN - 2) {                       // rattle, buzzing
-              ctx.fillStyle = RATTLE;
-              ctx.fillRect(x, y + (Math.floor(now / 40) % 2 ? -1 : 0), 1, 2);
-            } else {
-              ctx.fillStyle = (i % 4 === 1) ? DARK : BODY; // diamond-back bands
-              ctx.fillRect(x, y, 1, 2);
-              ctx.fillStyle = BELLY;
-              ctx.fillRect(x, y + 1, 1, 1);
-            }
-            if (i === 0) {                            // head + flicking tongue
-              ctx.fillStyle = DARK;
-              ctx.fillRect(x, y - 1, 2, 3);
-              ctx.fillStyle = "#050505";
-              ctx.fillRect(x + 1, y - 1, 1, 1);
-              if (Math.floor(now / 120) % 2) {
-                ctx.fillStyle = "#d4141e";
-                ctx.fillRect(x + 2, y + 1, 2, 1);
-              }
-            }
+          var t = now - t0;
+          ctx.clearRect(0, 0, W, H);
+
+          // the snake
+          if (t < tGrab) {
+            var head = Math.min(t * SNAKE_V, stopX);
+            drawSnake(ctx, LEN, function (i) {
+              var x = head - i;
+              return [x, SY + Math.sin(x * 0.55 - now * 0.012) * 2];
+            }, now, 1);
           }
-          if (k < 1) requestAnimationFrame(frame);
-          else { cv.remove(); busy = false; }
+
+          // the mobster
+          var mx, img, flip;
+          if (t >= tMobEnter && t < tGrab) {                   // running in, facing left
+            mx = W + 4 - (t - tMobEnter) * MOB_V_IN;
+            img = MOB.run[Math.floor(t / 90) % 2]; flip = true;
+          } else if (t >= tGrab && t < tLeave) {               // the snatch
+            mx = mobStop; img = MOB.grab; flip = true;
+            var hx = mx + 1, hy = GROUND - 8;
+            drawSnake(ctx, LEN, function (i) {               // held up, thrashing
+              return [hx + Math.sin(i * 0.9 + now * 0.03) * 1.5, hy + i * 0.45];
+            }, now, -1);
+          } else if (t >= tLeave) {                            // running off, facing right
+            mx = mobStop + (t - tLeave) * MOB_V_OUT;
+            img = MOB.grabRun[Math.floor(t / 80) % 2]; flip = false;
+            var gx = mx + MOB_W - 1, gy = GROUND - 9;
+            drawSnake(ctx, LEN, function (i) {               // flailing behind him
+              return [gx - i * 0.85, gy + Math.sin(i * 0.8 - now * 0.03) * 2.2 + i * 0.12];
+            }, now, 1);
+          }
+          if (img) {
+            ctx.save();
+            if (flip) { ctx.translate(Math.round(mx) + MOB_W, 0); ctx.scale(-1, 1); ctx.drawImage(img, 0, GROUND - MOB_H + 1); }
+            else ctx.drawImage(img, Math.round(mx), GROUND - MOB_H + 1);
+            ctx.restore();
+          }
+
+          if (t < tLeave || mx < W + LEN + 4) requestAnimationFrame(frame);
+          else { cv.remove(); heisting = false; }
         })(t0);
       });
-    });
+    }
   }
 
   /* ---------- pronunciation: tap support for phones ---------- */

@@ -15,7 +15,8 @@
 
 * { box-sizing: border-box; }
 
-html { background: var(--bg); }
+html { background: var(--bg); overflow-x: clip; }
+body { overflow-x: clip; }
 
 body {
   margin: 0;
@@ -150,14 +151,12 @@ a:hover, a:focus-visible {
 
 .bio { margin: 26px 0 0; }
 
-/* the snake that slithers past rattlesnake links */
-a.has-snake { position: relative; }
-.snake {
+/* the rattlesnake heist strip (drawn by main.js) */
+.heist {
   position: absolute;
-  bottom: -24px;
+  z-index: 30;
   pointer-events: none;
   image-rendering: pixelated;
-  z-index: 5;
 }
 
 /* pronunciation, on hover or tap */
