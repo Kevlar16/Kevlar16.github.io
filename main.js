@@ -109,7 +109,7 @@
   /* ---------- a rattlesnake slithers past its links ---------- */
 
   if (!reduce) {
-    var SCALE = 2; // css px per snake pixel
+    var SCALE = 3; // css px per snake pixel
     Array.prototype.forEach.call(document.querySelectorAll('a[href*="userattlesnake.com"]'), function (a) {
       var busy = false;
       a.classList.add("has-snake");
@@ -126,7 +126,7 @@
         cv.style.left = -20 * SCALE + "px";
         a.appendChild(cv);
         var ctx = cv.getContext("2d");
-        var LEN = 16, t0 = performance.now(), DUR = 1300;
+        var LEN = 20, t0 = performance.now(), DUR = 1900;
         var BODY = "#8a6a3a", DARK = "#4a3418", BELLY = "#c9a86a", RATTLE = "#e8dcc0";
 
         (function frame(now) {

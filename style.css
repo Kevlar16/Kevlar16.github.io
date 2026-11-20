@@ -154,7 +154,7 @@ a:hover, a:focus-visible {
 a.has-snake { position: relative; }
 .snake {
   position: absolute;
-  bottom: -17px;
+  bottom: -24px;
   pointer-events: none;
   image-rendering: pixelated;
   z-index: 5;
