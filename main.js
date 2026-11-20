@@ -106,6 +106,64 @@
 
   if (!reduce) ignite();
 
+  /* ---------- a rattlesnake slithers past its links ---------- */
+
+  if (!reduce) {
+    var SCALE = 2; // css px per snake pixel
+    Array.prototype.forEach.call(document.querySelectorAll('a[href*="userattlesnake.com"]'), function (a) {
+      var busy = false;
+      a.classList.add("has-snake");
+      a.addEventListener("mouseenter", function () {
+        if (busy) return;
+        busy = true;
+        var w = Math.ceil(a.offsetWidth / SCALE) + 40;   // canvas width in snake pixels
+        var h = 9;
+        var cv = document.createElement("canvas");
+        cv.className = "snake";
+        cv.width = w; cv.height = h;
+        cv.style.width = w * SCALE + "px";
+        cv.style.height = h * SCALE + "px";
+        cv.style.left = -20 * SCALE + "px";
+        a.appendChild(cv);
+        var ctx = cv.getContext("2d");
+        var LEN = 16, t0 = performance.now(), DUR = 1300;
+        var BODY = "#8a6a3a", DARK = "#4a3418", BELLY = "#c9a86a", RATTLE = "#e8dcc0";
+
+        (function frame(now) {
+          var k = (now - t0) / DUR;
+          var head = Math.round(-4 + (w + LEN + 8) * k);
+          ctx.clearRect(0, 0, w, h);
+          for (var i = LEN; i >= 0; i--) {
+            var x = head - i;
+            if (x < 0 || x >= w) continue;
+            var y = 4 + Math.round(Math.sin(x * 0.55 - now * 0.012) * 2);
+            if (i >= LEN - 2) {                       // rattle, buzzing
+              ctx.fillStyle = RATTLE;
+              ctx.fillRect(x, y + (Math.floor(now / 40) % 2 ? -1 : 0), 1, 2);
+            } else {
+              ctx.fillStyle = (i % 4 === 1) ? DARK : BODY; // diamond-back bands
+              ctx.fillRect(x, y, 1, 2);
+              ctx.fillStyle = BELLY;
+              ctx.fillRect(x, y + 1, 1, 1);
+            }
+            if (i === 0) {                            // head + flicking tongue
+              ctx.fillStyle = DARK;
+              ctx.fillRect(x, y - 1, 2, 3);
+              ctx.fillStyle = "#050505";
+              ctx.fillRect(x + 1, y - 1, 1, 1);
+              if (Math.floor(now / 120) % 2) {
+                ctx.fillStyle = "#d4141e";
+                ctx.fillRect(x + 2, y + 1, 2, 1);
+              }
+            }
+          }
+          if (k < 1) requestAnimationFrame(frame);
+          else { cv.remove(); busy = false; }
+        })(t0);
+      });
+    });
+  }
+
   /* ---------- pronunciation: tap support for phones ---------- */
 
   var say = document.querySelector(".say");

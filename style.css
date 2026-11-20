@@ -150,6 +150,16 @@ a:hover, a:focus-visible {
 
 .bio { margin: 26px 0 0; }
 
+/* the snake that slithers past rattlesnake links */
+a.has-snake { position: relative; }
+.snake {
+  position: absolute;
+  bottom: -17px;
+  pointer-events: none;
+  image-rendering: pixelated;
+  z-index: 5;
+}
+
 /* pronunciation, on hover or tap */
 .say {
   position: relative;
