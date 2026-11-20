@@ -108,6 +108,13 @@ a:hover, a:focus-visible {
   50%      { transform: scale(.7) rotate(45deg); }
 }
 
+/* flicker states, driven by main.js */
+.sign tspan.fx-off { fill-opacity: .07; }
+.sign .coins g.fx-off,
+.sign .to.fx-off,
+.sign .name.fx-off { opacity: .1; }
+.sign svg.fx-brown { opacity: .5; }
+
 /* power off */
 .sign.off .star, .sign.off .coins circle, .sign.off .to { fill: var(--yellow-off); filter: none; animation: none; }
 .sign.off .coins text { fill: #120c06; }

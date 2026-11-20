@@ -32,6 +32,80 @@
     }
   });
 
+  /* ---------- neon: ignition + random flicker ---------- */
+
+  var svg = sign.querySelector("svg");
+  // split the name into one tspan per letter, in all three glow layers
+  var layers = Array.prototype.slice.call(svg.querySelectorAll(".name"));
+  var NAME = "keval patel";
+  layers.forEach(function (t) {
+    t.textContent = "";
+    for (var k = 0; k < NAME.length; k++) {
+      if (NAME[k] === " ") { t.appendChild(document.createTextNode(" ")); continue; }
+      var ts = document.createElementNS(SVGNS, "tspan");
+      ts.textContent = NAME[k];
+      ts.setAttribute("data-i", k);
+      if (k === 8) ts.setAttribute("class", "dying"); // the t in patel never quite works
+      t.appendChild(ts);
+    }
+  });
+  var letterIdx = [];
+  for (var k2 = 0; k2 < NAME.length; k2++) if (NAME[k2] !== " " && k2 !== 8) letterIdx.push(k2);
+  var coins = Array.prototype.slice.call(svg.querySelectorAll(".coins > g"));
+  var toWord = svg.querySelector(".to");
+
+  function letterEls(i) { return svg.querySelectorAll('tspan[data-i="' + i + '"]'); }
+
+  // run a flicker pattern: alternating off/on durations in ms
+  function flick(els, pattern, cls) {
+    var t = 0;
+    pattern.forEach(function (ms, n) {
+      setTimeout(function () {
+        for (var j = 0; j < els.length; j++) els[j].classList.toggle(cls, n % 2 === 0);
+      }, t);
+      t += ms;
+    });
+    setTimeout(function () {
+      for (var j = 0; j < els.length; j++) els[j].classList.remove(cls);
+    }, t);
+  }
+
+  var PATTERNS = [[60, 80, 40], [120, 50, 30, 60, 50], [40, 40, 40, 300, 70], [200]];
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+  function randomFlicker() {
+    if (!sign.classList.contains("off")) {
+      var r = Math.random();
+      if (r < 0.55) flick(letterEls(pick(letterIdx)), pick(PATTERNS), "fx-off");
+      else if (r < 0.85) flick([pick(coins)], pick(PATTERNS), "fx-off");
+      else if (r < 0.93) flick([toWord], pick(PATTERNS), "fx-off");
+      else flick([svg], [70, 60, 90], "fx-brown"); // whole sign browns out
+    }
+    setTimeout(randomFlicker, 900 + Math.random() * 2600);
+  }
+
+  // ignition: bulbs first, then coins one by one, then "to", then the name
+  function ignite() {
+    sign.classList.add("off", "cold");
+    setTimeout(function () {
+      sign.classList.remove("off");
+      coins.concat([toWord]).forEach(function (c) { c.classList.add("fx-off"); });
+      layers.forEach(function (l) { l.classList.add("fx-off"); });
+      coins.forEach(function (c, i) {
+        setTimeout(function () { c.classList.remove("fx-off"); flick([c], [50, 60], "fx-off"); }, 250 + i * 110);
+      });
+      setTimeout(function () { toWord.classList.remove("fx-off"); }, 1100);
+      setTimeout(function () {
+        layers.forEach(function (l) { l.classList.remove("fx-off"); });
+        flick(layers, [80, 120, 60, 40, 50, 200, 90], "fx-off");
+        sign.classList.remove("cold");
+      }, 1350);
+      setTimeout(randomFlicker, 3200);
+    }, 350);
+  }
+
+  if (!reduce) ignite();
+
   /* ---------- contact, assembled here so html scrapers get nothing ---------- */
 
   var mail = document.getElementById("mail");
@@ -106,33 +180,31 @@
     girls.push(img);
   }
 
-  var lastY = window.scrollY, dir = 1, idle, ticking = false;
-
-  function draw() {
-    ticking = false;
-    var y = window.scrollY;
-    if (y !== lastY) dir = y > lastY ? 1 : -1;
-    lastY = y;
+  // first scroll sets the line walking; it crosses once and leaves the stage
+  function walk() {
+    window.removeEventListener("scroll", walk);
     var vw = window.innerWidth;
-    var loop = vw + GIRLS * GAP;
-    var base = (y * 0.55) % loop;
-    var step = Math.floor(y / 34);
-    for (var i = 0; i < GIRLS; i++) {
-      // offset so the line is already partly on stage at the top of the page
-      var x = ((base + i * GAP + GIRLS * GAP + 40) % loop) - GIRLS * GAP;
-      girls[i].style.transform = "translateX(" + x.toFixed(0) + "px)" + (dir < 0 ? " scaleX(-1)" : "");
-      girls[i].src = frames[(step + i) % 2];
-    }
+    var from = -GIRLS * GAP, to = vw + 40;
+    var SPEED = 170; // px per second
+    var dur = (to - from) / SPEED * 1000;
+    var t0 = performance.now();
+    parade.classList.add("on");
+    (function frame(now) {
+      var el = now - t0;
+      var x0 = from + (to - from) * Math.min(el / dur, 1);
+      var step = Math.floor(el / 200);
+      for (var i = 0; i < GIRLS; i++) {
+        girls[i].style.transform = "translateX(" + (x0 + i * GAP).toFixed(0) + "px)";
+        girls[i].src = frames[(step + i) % 2];
+      }
+      if (el < dur) requestAnimationFrame(frame);
+      else parade.classList.remove("on");
+    })(t0);
   }
 
   if (!reduce) {
-    window.addEventListener("scroll", function () {
-      parade.classList.add("on");
-      clearTimeout(idle);
-      idle = setTimeout(function () { parade.classList.remove("on"); }, 900);
-      if (!ticking) { ticking = true; requestAnimationFrame(draw); }
-    }, { passive: true });
-    draw();
+    girls.forEach(function (g) { g.style.transform = "translateX(-200px)"; });
+    window.addEventListener("scroll", walk, { passive: true });
   }
 
   /* ---------- slot machine ---------- */
