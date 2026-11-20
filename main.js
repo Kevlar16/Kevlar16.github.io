@@ -168,10 +168,14 @@
 
   var say = document.querySelector(".say");
   if (say) {
+    // mouse: hover only, a click changes nothing. touch/pen: tap toggles it.
+    var lastPointer = "mouse";
+    say.addEventListener("pointerdown", function (e) { lastPointer = e.pointerType; });
     say.addEventListener("click", function (e) {
       e.stopPropagation();
-      say.classList.toggle("show");
+      if (lastPointer !== "mouse") say.classList.toggle("show");
     });
+    say.addEventListener("mouseleave", function () { if (lastPointer === "mouse") say.classList.remove("show"); });
     document.addEventListener("click", function () { say.classList.remove("show"); });
   }
 

@@ -186,7 +186,7 @@ a.has-snake { position: relative; }
   transition: opacity .12s, transform .12s;
 }
 .say:hover::after,
-.say:focus::after,
+.say:focus-visible::after,
 .say.show::after { opacity: 1; transform: translateY(0); }
 
 section { margin-top: 44px; }
